@@ -51,6 +51,10 @@ app.post('/api/tasks', (req, res) => {
     });
 })
 
+app.get('/api/tasks', (req, res) => {
+    res.status(200).json(tasks);
+})
+
 app.listen(port, () => {
     console.log(`DevTrack server running on port ${port}`);
 });
