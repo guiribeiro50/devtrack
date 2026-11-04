@@ -8,3 +8,5 @@ interface Task {
     status: TaskStatus;
     priority: TaskPriority;
 }
+
+export { Task, TaskStatus, TaskPriority };
