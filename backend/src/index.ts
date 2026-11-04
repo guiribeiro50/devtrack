@@ -55,6 +55,26 @@ app.get('/api/tasks', (req, res) => {
     res.status(200).json(tasks);
 })
 
+app.get('/api/tasks/:id', (req, res) => {
+    const id = parseInt(req.params.id);
+
+    if (Number.isNaN(id)) {
+        return res.status(400).json({
+            message: "400 Bad Request"
+        });
+    }
+
+    const found = tasks.find(element => element.id === id);
+
+    if (!found) {
+        return res.status(404).json({
+            message: "404 Not Found"
+        });
+    }
+
+    return res.status(200).json(found);
+})
+
 app.listen(port, () => {
     console.log(`DevTrack server running on port ${port}`);
 });
