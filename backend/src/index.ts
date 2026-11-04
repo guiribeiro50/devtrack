@@ -4,6 +4,7 @@ import type { Task } from "./models/task.js";
 const app = express();
 const port = 3000;
 const tasks: Task[] = [];
+let nextId = 1;
 const validStatuses = ["backlog", "ready", "in-progress", "in-review", "done"];
 const validPriorities = ["low", "medium", "high", "urgent"];
 
@@ -34,6 +35,7 @@ app.post('/api/tasks', (req, res) => {
     }
 
     const newTask: Task = {
+        id: nextId++,
         title: req.body.title.trim(),
         desc: req.body.desc.trim(),
         assignee: req.body.assignee.trim(),
