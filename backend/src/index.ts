@@ -172,6 +172,30 @@ app.patch('/api/tasks/:id', (req, res) => {
 
 })
 
+app.delete('/api/tasks/:id', (req, res) => {
+    const taskId = Number(req.params.id);
+
+    if (!Number.isInteger(taskId) || taskId <= 0) {
+        return res.status(400).json({
+            message: "400 Bad Request"
+        });
+    }
+
+    const taskIndex = tasks.findIndex(task => task.id === taskId);
+
+    if (taskIndex === -1) {
+        return res.status(404).json({
+            message: "404 Not Found"
+        });
+    }
+
+    tasks.splice(taskIndex, 1);
+
+    return res.status(200).json({
+        message: "Task deleted successfully",
+    });
+})
+
 app.listen(port, () => {
     console.log(`DevTrack server running on port ${port}`);
 });
