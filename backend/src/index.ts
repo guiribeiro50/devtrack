@@ -58,6 +58,25 @@ app.get('/api/tasks', (req, res) => {
     const status = req.query.status;
     const priority = req.query.priority;
     const assignee = req.query.assignee;
+
+    const page = req.query.page === undefined ? 1 : Number(req.query.page);
+    const limit = req.query.limit === undefined ? 10 : Number(req.query.limit);
+    const offset = (page - 1) * limit;
+
+    if (Number.isNaN(page) || !Number.isInteger(page) || page <= 0) {
+        return res.status(400).json({
+            error: "Invalid page",
+            message: "The page parameter must be a positive integer."
+        });
+    }
+
+    if (Number.isNaN(limit) || !Number.isInteger(limit) || limit <= 0 || limit > 100) {
+        return res.status(400).json({
+            error: "Invalid limit",
+            message: "The limit parameter must be a positive integer between 1 and 100."
+        });
+    } 
+
     let filteredTasks = tasks;
 
     if (status !== undefined) {
@@ -91,9 +110,21 @@ app.get('/api/tasks', (req, res) => {
         }
 
         filteredTasks = filteredTasks.filter(task => task.assignee === assignee.trim());
-    }
+    }  
 
-    return res.status(200).json(filteredTasks);
+    const paginatedTasks = filteredTasks.slice(offset, offset + limit);
+    const totalTasks = filteredTasks.length;
+    const totalPages = Math.ceil(totalTasks / limit);
+
+    return res.status(200).json({
+        data: paginatedTasks,
+        pagination: {
+            currentPage: page,
+            limit,
+            totalTasks,
+            totalPages
+        }
+    });
 });
 
 app.get('/api/tasks/:id', (req, res) => {
