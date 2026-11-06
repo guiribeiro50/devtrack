@@ -1,5 +1,5 @@
-type TaskStatus = "backlog" | "ready" | "in-progress" | "in-review" | "done";
-type TaskPriority = "low" | "medium" | "high" | "urgent";
+type TaskStatus = 'backlog' | 'ready' | 'in-progress' | 'in-review' | 'done';
+type TaskPriority = 'low' | 'medium' | 'high' | 'urgent';
 
 interface Task {
     id: number;
