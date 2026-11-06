@@ -1,57 +1,62 @@
-
-import express from "express";
-import type { Task } from "./models/task.js";
+import express from 'express';
+import type { Task } from './models/task.js';
 
 const app = express();
 const port = 3000;
-const tasks: Task[] = [];
-let nextId = 1;
-const validStatuses = ["backlog", "ready", "in-progress", "in-review", "done"];
-const validPriorities = ["low", "medium", "high", "urgent"];
-const allowedFields = ["title", "desc", "assignee", "status", "priority"];
 
 app.use(express.json());
 
+const tasks: Task[] = [];
+let nextId = 1;
+
+const validStatuses = ['backlog', 'ready', 'in-progress', 'in-review', 'done'];
+const validPriorities = ['low', 'medium', 'high', 'urgent'];
+const allowedFields = ['title', 'desc', 'assignee', 'status', 'priority'];
+
 app.get('/', (req, res) => {
-    res.send("Welcome to DevTrack API");
+    res.send('Welcome to DevTrack API');
 });
 
 app.post('/api/tasks', (req, res) => {
-
-    if (
-        typeof req.body !== "object" || req.body === null || Array.isArray(req.body) ||
-        typeof req.body.title !== "string" || !req.body.title.trim() ||
-        typeof req.body.desc !== "string" || !req.body.desc.trim() ||
-        typeof req.body.assignee !== "string" || !req.body.assignee.trim()
-    ) {
+    if (typeof req.body !== 'object' || req.body === null || Array.isArray(req.body)) {
         return res.status(400).json({
-            error: "Missing required fields",
-            message: "Fields 'title', 'desc' and 'assignee' are required."
+            error: 'Invalid request body',
+            message: 'The request body must be a JSON object.',
         });
     }
 
-    if (!validPriorities.includes(req.body.priority)) {
+    const { title, desc, assignee, priority } = req.body;
+
+    if (
+        typeof title !== 'string' || !title.trim() ||
+        typeof desc !== 'string' || !desc.trim() ||
+        typeof assignee !== 'string' || !assignee.trim()
+    ) {
         return res.status(400).json({
-            error: "Invalid priority",
-            message: "The provided priority is not valid."
+            error: 'Invalid task data',
+            message: 'Title, description and assignee are required and must be non-empty strings.',
+        });
+    }
+
+    if (!validPriorities.includes(priority)) {
+        return res.status(400).json({
+            error: 'Invalid priority',
+            message: 'The provided priority is not valid.',
         });
     }
 
     const newTask: Task = {
         id: nextId++,
-        title: req.body.title.trim(),
-        desc: req.body.desc.trim(),
-        assignee: req.body.assignee.trim(),
-        status: "backlog",
-        priority: req.body.priority.trim()
+        title: title.trim(),
+        desc: desc.trim(),
+        assignee: assignee.trim(),
+        status: 'backlog',
+        priority,
     };
 
     tasks.push(newTask);
 
-    return res.status(201).json({
-        message: "Task created successfully",
-        task: newTask
-    });
+    return res.status(201).json(newTask);
 });
 
 app.get('/api/tasks', (req, res) => {
@@ -65,25 +70,25 @@ app.get('/api/tasks', (req, res) => {
 
     if (Number.isNaN(page) || !Number.isInteger(page) || page <= 0) {
         return res.status(400).json({
-            error: "Invalid page",
-            message: "The page parameter must be a positive integer."
+            error: 'Invalid page',
+            message: 'The page parameter must be a positive integer.',
         });
     }
 
     if (Number.isNaN(limit) || !Number.isInteger(limit) || limit <= 0 || limit > 100) {
         return res.status(400).json({
-            error: "Invalid limit",
-            message: "The limit parameter must be a positive integer between 1 and 100."
+            error: 'Invalid limit',
+            message: 'The limit parameter must be a positive integer between 1 and 100.',
         });
-    } 
+    }
 
     let filteredTasks = tasks;
 
     if (status !== undefined) {
-        if (typeof status !== "string" || !validStatuses.includes(status)) {
+        if (typeof status !== 'string' || !validStatuses.includes(status)) {
             return res.status(400).json({
-                error: "Invalid status",
-                message: "The provided status is not valid."
+                error: 'Invalid status',
+                message: 'The provided status is not valid.',
             });
         }
 
@@ -91,10 +96,10 @@ app.get('/api/tasks', (req, res) => {
     }
 
     if (priority !== undefined) {
-        if (typeof priority !== "string" || !validPriorities.includes(priority)) {
+        if (typeof priority !== 'string' || !validPriorities.includes(priority)) {
             return res.status(400).json({
-                error: "Invalid priority",
-                message: "The provided priority is not valid."
+                error: 'Invalid priority',
+                message: 'The provided priority is not valid.',
             });
         }
 
@@ -102,15 +107,15 @@ app.get('/api/tasks', (req, res) => {
     }
 
     if (assignee !== undefined) {
-        if (typeof assignee !== "string" || !assignee.trim()) {
+        if (typeof assignee !== 'string' || !assignee.trim()) {
             return res.status(400).json({
-                error: "Invalid assignee",
-                message: "The provided assignee is not valid."
+                error: 'Invalid assignee',
+                message: 'The provided assignee is not valid.',
             });
         }
 
         filteredTasks = filteredTasks.filter(task => task.assignee === assignee.trim());
-    }  
+    }
 
     const paginatedTasks = filteredTasks.slice(offset, offset + limit);
     const totalTasks = filteredTasks.length;
@@ -122,8 +127,8 @@ app.get('/api/tasks', (req, res) => {
             currentPage: page,
             limit,
             totalTasks,
-            totalPages
-        }
+            totalPages,
+        },
     });
 });
 
@@ -132,150 +137,127 @@ app.get('/api/tasks/:id', (req, res) => {
 
     if (!Number.isInteger(id) || id <= 0) {
         return res.status(400).json({
-            error: "Invalid task ID",
-            message: "The provided task ID must be a positive integer."
+            error: 'Invalid task ID',
+            message: 'The task ID must be a positive integer.',
         });
     }
 
-    const found = tasks.find(element => element.id === id);
-
-    if (!found) {
-        return res.status(404).json({
-            error: "Task not found",
-            message: "No task was found with the provided ID."
-        });
-    }
-
-    return res.status(200).json(found);
-});
-
-app.patch('/api/tasks/:id', (req, res) => {
-    const taskId = Number(req.params.id);
-
-    if (!Number.isInteger(taskId) || taskId <= 0) {
-        return res.status(400).json({
-            error: "Invalid task ID",
-            message: "The provided task ID must be a positive integer."
-        });
-    }
-
-    if (typeof req.body !== "object" || req.body === null || Array.isArray(req.body)) {
-        return res.status(400).json({
-            error: "Invalid request body",
-            message: "The request body must be a valid JSON object."
-        });
-    }
-
-    const receivedFields = Object.keys(req.body);
-
-    if (receivedFields.length === 0) {
-        return res.status(400).json({
-            error: "Empty request body",
-            message: "At least one field must be provided for the update."
-        });
-    }
-
-    const hasInvalidFields = receivedFields.some(field => !allowedFields.includes(field));
-
-    if (hasInvalidFields) {
-        return res.status(400).json({
-            error: "Invalid fields",
-            message: "The request contains fields that cannot be updated."
-        });
-    }
-
-    const task = tasks.find(element => element.id === taskId);
+    const task = tasks.find(task => task.id === id);
 
     if (!task) {
         return res.status(404).json({
-            error: "Task not found",
-            message: "No task was found with the provided ID."
+            error: 'Task not found',
+            message: `Task with ID ${id} was not found.`,
+        });
+    }
+
+    return res.status(200).json(task);
+});
+
+app.patch('/api/tasks/:id', (req, res) => {
+    const id = Number(req.params.id);
+
+    if (!Number.isInteger(id) || id <= 0) {
+        return res.status(400).json({
+            error: 'Invalid task ID',
+            message: 'The task ID must be a positive integer.',
+        });
+    }
+
+    if (typeof req.body !== 'object' || req.body === null || Array.isArray(req.body)) {
+        return res.status(400).json({
+            error: 'Invalid request body',
+            message: 'The request body must be a JSON object.',
         });
     }
 
     const update = req.body;
+    const fields = Object.keys(update);
 
-    if (update.title !== undefined) {
-        if (typeof update.title !== "string" || !update.title.trim()) {
-            return res.status(400).json({
-                error: "Invalid title",
-                message: "The title must be a non-empty string."
-            });
-        }
-
-        update.title = update.title.trim();
-    }
-
-    if (update.desc !== undefined) {
-        if (typeof update.desc !== "string" || !update.desc.trim()) {
-            return res.status(400).json({
-                error: "Invalid description",
-                message: "The description must be a non-empty string."
-            });
-        }
-
-        update.desc = update.desc.trim();
-    }
-
-    if (update.assignee !== undefined) {
-        if (typeof update.assignee !== "string" || !update.assignee.trim()) {
-            return res.status(400).json({
-                error: "Invalid assignee",
-                message: "The assignee must be a non-empty string."
-            });
-        }
-
-        update.assignee = update.assignee.trim();
-    }
-
-    if (update.priority !== undefined && !validPriorities.includes(update.priority)) {
+    if (fields.length === 0) {
         return res.status(400).json({
-            error: "Invalid priority",
-            message: "The provided priority is not valid."
+            error: 'Empty update',
+            message: 'At least one field must be provided.',
         });
+    }
+
+    const invalidFields = fields.filter(field => !allowedFields.includes(field));
+
+    if (invalidFields.length > 0) {
+        return res.status(400).json({
+            error: 'Invalid fields',
+            message: `The following fields cannot be updated: ${invalidFields.join(', ')}.`,
+        });
+    }
+
+    for (const field of fields) {
+        if (typeof update[field] !== 'string' || !update[field].trim()) {
+            return res.status(400).json({
+                error: 'Invalid field value',
+                message: `The field '${field}' must be a non-empty string.`,
+            });
+        }
+
+        update[field] = update[field].trim();
     }
 
     if (update.status !== undefined && !validStatuses.includes(update.status)) {
         return res.status(400).json({
-            error: "Invalid status",
-            message: "The provided status is not valid."
+            error: 'Invalid status',
+            message: 'The provided status is not valid.',
+        });
+    }
+
+    if (update.priority !== undefined && !validPriorities.includes(update.priority)) {
+        return res.status(400).json({
+            error: 'Invalid priority',
+            message: 'The provided priority is not valid.',
+        });
+    }
+
+    const task = tasks.find(task => task.id === id);
+
+    if (!task) {
+        return res.status(404).json({
+            error: 'Task not found',
+            message: `Task with ID ${id} was not found.`,
         });
     }
 
     Object.assign(task, update);
 
     return res.status(200).json({
-        message: "Task updated successfully",
-        task
+        message: 'Task updated successfully',
+        task,
     });
 });
 
 app.delete('/api/tasks/:id', (req, res) => {
-    const taskId = Number(req.params.id);
+    const id = Number(req.params.id);
 
-    if (!Number.isInteger(taskId) || taskId <= 0) {
+    if (!Number.isInteger(id) || id <= 0) {
         return res.status(400).json({
-            error: "Invalid task ID",
-            message: "The provided task ID must be a positive integer."
+            error: 'Invalid task ID',
+            message: 'The task ID must be a positive integer.',
         });
     }
 
-    const taskIndex = tasks.findIndex(task => task.id === taskId);
+    const taskIndex = tasks.findIndex(task => task.id === id);
 
     if (taskIndex === -1) {
         return res.status(404).json({
-            error: "Task not found",
-            message: "No task was found with the provided ID."
+            error: 'Task not found',
+            message: `Task with ID ${id} was not found.`,
         });
     }
 
     tasks.splice(taskIndex, 1);
 
     return res.status(200).json({
-        message: "Task deleted successfully"
+        message: 'Task deleted successfully',
     });
 });
 
 app.listen(port, () => {
-    console.log(`DevTrack server running on port ${port}`);
+    console.log(`DevTrack API is running at http://localhost:${port}`);
 });
