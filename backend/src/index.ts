@@ -28,9 +28,12 @@ app.post('/api/tasks', (req, res) => {
     const { title, desc, assignee, priority } = req.body;
 
     if (
-        typeof title !== 'string' || !title.trim() ||
-        typeof desc !== 'string' || !desc.trim() ||
-        typeof assignee !== 'string' || !assignee.trim()
+        typeof title !== 'string' ||
+        !title.trim() ||
+        typeof desc !== 'string' ||
+        !desc.trim() ||
+        typeof assignee !== 'string' ||
+        !assignee.trim()
     ) {
         return res.status(400).json({
             error: 'Invalid task data',
@@ -92,7 +95,7 @@ app.get('/api/tasks', (req, res) => {
             });
         }
 
-        filteredTasks = filteredTasks.filter(task => task.status === status);
+        filteredTasks = filteredTasks.filter((task) => task.status === status);
     }
 
     if (priority !== undefined) {
@@ -103,7 +106,7 @@ app.get('/api/tasks', (req, res) => {
             });
         }
 
-        filteredTasks = filteredTasks.filter(task => task.priority === priority);
+        filteredTasks = filteredTasks.filter((task) => task.priority === priority);
     }
 
     if (assignee !== undefined) {
@@ -114,7 +117,7 @@ app.get('/api/tasks', (req, res) => {
             });
         }
 
-        filteredTasks = filteredTasks.filter(task => task.assignee === assignee.trim());
+        filteredTasks = filteredTasks.filter((task) => task.assignee === assignee.trim());
     }
 
     const paginatedTasks = filteredTasks.slice(offset, offset + limit);
@@ -142,7 +145,7 @@ app.get('/api/tasks/:id', (req, res) => {
         });
     }
 
-    const task = tasks.find(task => task.id === id);
+    const task = tasks.find((task) => task.id === id);
 
     if (!task) {
         return res.status(404).json({
@@ -181,7 +184,7 @@ app.patch('/api/tasks/:id', (req, res) => {
         });
     }
 
-    const invalidFields = fields.filter(field => !allowedFields.includes(field));
+    const invalidFields = fields.filter((field) => !allowedFields.includes(field));
 
     if (invalidFields.length > 0) {
         return res.status(400).json({
@@ -215,7 +218,7 @@ app.patch('/api/tasks/:id', (req, res) => {
         });
     }
 
-    const task = tasks.find(task => task.id === id);
+    const task = tasks.find((task) => task.id === id);
 
     if (!task) {
         return res.status(404).json({
@@ -242,7 +245,7 @@ app.delete('/api/tasks/:id', (req, res) => {
         });
     }
 
-    const taskIndex = tasks.findIndex(task => task.id === id);
+    const taskIndex = tasks.findIndex((task) => task.id === id);
 
     if (taskIndex === -1) {
         return res.status(404).json({
